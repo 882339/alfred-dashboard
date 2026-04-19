@@ -1,0 +1,188 @@
+const express = require('express');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
+
+const app = express();
+app.use(express.json());
+app.use(express.static(__dirname));
+
+const GOG_ACCOUNT = 'openclaw.bot.alessandro@gmail.com';
+
+// Helper per eseguire comandi gog
+async function gog(args) {
+    const cmd = `GOG_ACCOUNT=${GOG_ACCOUNT} gog ${args} --json --no-input`;
+    const { stdout } = await execPromise(cmd);
+    return JSON.parse(stdout);
+}
+
+// GET /api/events - Lista eventi
+app.get('/api/events', async (req, res) => {
+    try {
+        const from = req.query.from || new Date().toISOString();
+        const to = req.query.to || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        
+        const result = await gog(`calendar events "primary" --from ${from} --to ${to}`);
+        res.json(result);
+    } catch (err) {
+        console.error('Error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/events - Crea evento
+app.post('/api/events', async (req, res) => {
+    try {
+        const { title, description, start, end, color, emails } = req.body;
+        
+        let args = `calendar create "primary" --summary "${title}" --from ${start} --to ${end}`;
+        if (description) args += ` --description "${description}"`;
+        if (color) args += ` --event-color ${color}`;
+        if (emails && emails.length > 0) {
+            args += ` --attendees "${emails.join(',')}"`;
+        }
+        
+        const result = await gog(args);
+        res.json(result);
+    } catch (err) {
+        console.error('Error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/events/:id - Elimina evento
+app.delete('/api/events/:id', async (req, res) => {
+    try {
+        await gog(`calendar delete "primary" ${req.params.id}`);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/send-reminder - Invia email promemoria
+app.post('/api/send-reminder', async (req, res) => {
+    try {
+        const { to, eventTitle, eventDate, eventTime, location, description } = req.body;
+        
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0f; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0f; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background: linear-gradient(145deg, #1a1a24 0%, #12121a 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="font-size: 48px;">📅</td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="color: white; font-size: 24px; font-weight: 700; padding-top: 10px;">
+                                        Promemoria Evento
+                                    </td>
+                                </tr>
+                            </table>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <!-- Event Title -->
+                                <tr>
+                                    <td style="padding-bottom: 20px; border-bottom: 1px solid #2a2a3a;">
+                                        <span style="color: #6366f1; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Titolo Evento</span>
+                                        <p style="color: #f8fafc; font-size: 22px; font-weight: 600; margin: 8px 0 0 0;">${eventTitle}</p>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Date & Time -->
+                                <tr>
+                                    <td style="padding: 20px 0; border-bottom: 1px solid #2a2a3a;">
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td valign="top" style="padding-right: 20px;">
+                                                    <span style="color: #6366f1; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">📅 Data</span>
+                                                    <p style="color: #f8fafc; font-size: 16px; margin: 8px 0 0 0;">${eventDate}</p>
+                                                </td>
+                                                <td valign="top">
+                                                    <span style="color: #6366f1; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">⏰ Orario</span>
+                                                    <p style="color: #f8fafc; font-size: 16px; margin: 8px 0 0 0;">${eventTime}</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Location -->
+                                ${location ? `
+                                <tr>
+                                    <td style="padding: 20px 0; border-bottom: 1px solid #2a2a3a;">
+                                        <span style="color: #6366f1; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">📍 Luogo</span>
+                                        <p style="color: #f8fafc; font-size: 16px; margin: 8px 0 0 0;">${location}</p>
+                                    </td>
+                                </tr>
+                                ` : ''}
+                                
+                                <!-- Description -->
+                                ${description ? `
+                                <tr>
+                                    <td style="padding: 20px 0;">
+                                        <span style="color: #6366f1; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">📝 Note</span>
+                                        <p style="color: #94a3b8; font-size: 15px; margin: 8px 0 0 0; line-height: 1.6;">${description}</p>
+                                    </td>
+                                </tr>
+                                ` : ''}
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background: #0d0d14; padding: 20px; text-align: center;">
+                            <p style="color: #64748b; font-size: 13px; margin: 0;">
+                                Gestito da <strong style="color: #8b5cf6;">Alfred</strong> 🤖
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+
+        const args = `gmail send --to "${to}" --subject "📅 Promemoria: ${eventTitle}" --body-html '${htmlBody.replace(/'/g, "\\'")}'`;
+        
+        await gog(args);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/calendar/colors - Colori calendario
+app.get('/api/colors', async (req, res) => {
+    try {
+        const result = await gog('calendar colors');
+        res.json(result);
+    } catch (err) {
+        console.error('Error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+});
