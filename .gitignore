@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Credentials (keep only template)
+credentials.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OpenClaw
+.openclaw/
+*.log
+
+# Temporary
+*.tmp
+*.swp

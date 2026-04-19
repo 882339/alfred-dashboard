@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred - Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a24;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #1e293b;
+            --glow-primary: rgba(99, 102, 241, 0.3);
+            --glow-secondary: rgba(139, 92, 246, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, var(--glow-primary) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--glow-secondary) 0%, transparent 50%),
+                linear-gradient(180deg, var(--bg-dark) 0%, #0d0d14 100%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            box-shadow: 0 8px 32px var(--glow-primary);
+        }
+
+        .logo-text h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text span {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 100px;
+            font-size: 0.875rem;
+            color: var(--accent-success);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+            background: var(--bg-card-hover);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .card-icon.session { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .card-icon.api { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+        .card-icon.projects { background: linear-gradient(135deg, #10b981, #059669); }
+        .card-icon.tools { background: linear-gradient(135deg, #ec4899, #8b5cf6); }
+        .card-icon.activity { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Session Details */
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .detail-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .detail-value.highlight {
+            color: var(--accent-primary);
+        }
+
+        /* API Keys */
+        .api-key-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.875rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+        }
+
+        .api-key-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .api-key-name {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .api-key-status {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            color: var(--accent-success);
+        }
+
+        .api-key-status.inactive {
+            color: var(--text-muted);
+        }
+
+        /* Projects */
+        .project-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .project-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateX(8px);
+        }
+
+        .project-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .project-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .project-info h4 {
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .project-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .project-arrow {
+            margin-left: auto;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .project-item:hover .project-arrow {
+            transform: translateX(4px);
+            color: var(--accent-primary);
+        }
+
+        /* Tools */
+        .tool-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.875rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .tool-tag:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25));
+            transform: translateY(-2px);
+        }
+
+        /* Activity */
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding: 0.875rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            min-width: 60px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .activity-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .activity-text strong {
+            color: var(--text-primary);
+        }
+
+        /* Full width card */
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Copy Button */
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-section">
+                <div class="avatar">🤖</div>
+                <div class="logo-text">
+                    <h1>Alfred</h1>
+                    <span>AI Assistant Control Panel</span>
+                </div>
+            </div>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                Online & Ready
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-value" id="apiCount">2</div>
+                <div class="stat-label">API Keys</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="projectCount">2</div>
+                <div class="stat-label">Progetti</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="toolCount">5</div>
+                <div class="stat-label">Tools</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            
+            <!-- Session Info -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon session">📊</div>
+                    <div>
+                        <div class="card-title">Sessione Corrente</div>
+                        <div class="card-subtitle">Informazioni di runtime</div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Session ID</span>
+                    <span class="detail-value highlight" id="sessionId">agent:main:main</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Modello</span>
+                    <span class="detail-value" id="model">minimax-m2.5</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Canale</span>
+                    <span class="detail-value">webchat</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">OS</span>
+                    <span class="detail-value">Linux</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Runtime</span>
+                    <span class="detail-value">OpenClaw</span>
+                </div>
+            </div>
+
+            <!-- API Keys -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon api">🔐</div>
+                    <div>
+                        <div class="card-title">API Keys</div>
+                        <div class="card-subtitle">Credenziali configurate</div>
+                    </div>
+                </div>
+                <div class="api-key-item">
+                    <span class="api-key-name">
+                        <span>📧</span> Google OAuth
+                    </span>
+                    <span class="api-key-status">
+                        <span style="color: var(--accent-success);">✓</span> Attiva
+                    </span>
+                </div>
+                <div class="api-key-item">
+                    <span class="api-key-name">
+                        <span>🐙</span> GitHub
+                    </span>
+                    <span class="api-key-status">
+                        <span style="color: var(--accent-success);">✓</span> Collegato
+                    </span>
+                </div>
+                <div class="api-key-item">
+                    <span class="api-key-name">
+                        <span>🌐</span> OpenRouter
+                    </span>
+                    <span class="api-key-status">
+                        <span style="color: var(--accent-success);">✓</span> Attivo
+                    </span>
+                </div>
+            </div>
+
+            <!-- Projects -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon projects">📁</div>
+                    <div>
+                        <div class="card-title">Progetti</div>
+                        <div class="card-subtitle">I tuoi progetti e script</div>
+                    </div>
+                </div>
+                
+                <a href="/appunti/latex" class="project-item" target="_blank">
+                    <div class="project-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">📄</div>
+                    <div class="project-info">
+                        <h4>LaTeX</h4>
+                        <p>Documenti e template LaTeX</p>
+                    </div>
+                    <span class="project-arrow">→</span>
+                </a>
+                
+                <a href="/appunti" class="project-item" target="_blank">
+                    <div class="project-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">📝</div>
+                    <div class="project-info">
+                        <h4>Appunti</h4>
+                        <p>Note su sicurezza e networking</p>
+                    </div>
+                    <span class="project-arrow">→</span>
+                </a>
+            </div>
+
+            <!-- Tools -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon tools">🔧</div>
+                    <div>
+                        <div class="card-title">Tools</div>
+                        <div class="card-subtitle">Funzionalità disponibili</div>
+                    </div>
+                </div>
+                <div>
+                    <span class="tool-tag">🔐 Password Generator</span>
+                    <span class="tool-tag">📧 Gmail Integration</span>
+                    <span class="tool-tag">📅 Calendar Sync</span>
+                    <span class="tool-tag">💾 Drive Backup</span>
+                    <span class="tool-tag">🌐 Web Search</span>
+                </div>
+            </div>
+
+            <!-- Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon activity">📜</div>
+                    <div>
+                        <div class="card-title">Attività Recenti</div>
+                        <div class="card-subtitle">Cronologia delle azioni</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">28 mar</span>
+                    <span class="activity-text"><strong>GitHub collegato</strong> - Configurato PAT</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">28 mar</span>
+                    <span class="activity-text"><strong>Budget configurato</strong> - $5 giornaliero</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">28 mar</span>
+                    <span class="activity-text"><strong>Prompt caching</strong> - Abilitato (TTL 1h)</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">28 mar</span>
+                    <span class="activity-text"><strong>Google OAuth</strong> - Configurato</span>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">⚡</div>
+                    <div>
+                        <div class="card-title">Azioni Rapide</div>
+                        <div class="card-subtitle">Comandi veloci</div>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="/?reset" class="project-item" style="margin: 0;">
+                        <div class="project-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🔄</div>
+                        <div class="project-info">
+                            <h4>Reset Sessione</h4>
+                            <p>Riavvia la conversazione</p>
+                        </div>
+                    </a>
+                    <a href="/?status" class="project-item" style="margin: 0;">
+                        <div class="project-icon" style="background: linear-gradient(135deg, #10b981, #059669);">📈</div>
+                        <div class="project-info">
+                            <h4>Stato Sistema</h4>
+                            <p>Visualizza statistiche dettagliate</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh session info
+        async function refreshSessionInfo() {
+            try {
+                const response = await fetch('/api/session');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('sessionId').textContent = data.sessionKey || 'agent:main:main';
+                    document.getElementById('model').textContent = data.model || 'minimax-m2.5';
+                }
+            } catch (e) {
+                console.log('Using default session info');
+            }
+        }
+
+        // Refresh on load
+        refreshSessionInfo();
+
+        // Update time
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('it-IT');
+        }, 1000);
+    </script>
+</body>
+</html>
