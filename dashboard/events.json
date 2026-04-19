@@ -1,0 +1,14 @@
+[
+  {
+    "id": "local_1776617721762",
+    "summary": "Test Event",
+    "start": {
+      "dateTime": "2026-04-19T10:00:00.000Z"
+    },
+    "end": {
+      "dateTime": "2026-04-19T11:00:00.000Z"
+    },
+    "source": "local",
+    "attendees": []
+  }
+]

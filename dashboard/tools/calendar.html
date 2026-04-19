@@ -424,8 +424,8 @@
         
         <div class="header">
             <h1><span>📅</span> Calendario</h1>
-            <div class="sync-badge">
-                <span>●</span> Sincronizzato con Google Calendar
+            <div class="sync-badge" id="syncBadge">
+                <span>●</span> <span id="syncStatus">Caricamento...</span>
             </div>
         </div>
 
@@ -535,14 +535,33 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             initColorOptions();
+            checkStatus();
             loadEvents();
             renderCalendar();
             
             // Set default dates
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('eventStartDate').value = today;
-            document.getElementById('eventEndDate').value = today;
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            document.getElementById('eventStartDate').value = todayStr;
+            document.getElementById('eventEndDate').value = todayStr;
         });
+
+        async function checkStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                const badge = document.getElementById('syncStatus');
+                if (data.googleConnected) {
+                    badge.textContent = 'Sincronizzato con Google';
+                    document.getElementById('syncBadge').style.color = 'var(--accent-success)';
+                } else {
+                    badge.textContent = 'Modalità locale';
+                    document.getElementById('syncBadge').style.color = 'var(--accent-warning)';
+                }
+            } catch (err) {
+                document.getElementById('syncStatus').textContent = 'Errore connessione';
+            }
+        }
 
         function initColorOptions() {
             const container = document.getElementById('colorOptions');
@@ -738,12 +757,13 @@
             const description = document.getElementById('eventDescription').value.trim();
 
             if (!title || !startDate || !startTime) {
-                showToast('Compila i campi obbligatori', true);
+                showToast('Compila i campi obbligatori (titolo, data, orario)', true);
                 return;
             }
 
-            const start = `${startDate}T${startTime}:00`;
-            const end = `${endDate}T${endTime}:00`;
+            // Format ISO 8601 for Google Calendar
+            const start = new Date(`${startDate}T${startTime}:00`).toISOString();
+            const end = new Date(`${endDate}T${endTime}:00`).toISOString();
 
             try {
                 const res = await fetch('/api/events', {
@@ -760,13 +780,14 @@
                     })
                 });
 
-                if (!res.ok) throw new Error('Failed to save');
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.error || 'Failed to save');
 
                 showToast('Evento salvato!');
                 closeModal();
                 loadEvents();
             } catch (err) {
-                showToast('Errore nel salvataggio', true);
+                showToast('Errore: ' + err.message, true);
             }
         }
 
