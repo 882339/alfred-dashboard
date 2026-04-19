@@ -792,20 +792,49 @@
         }
 
         async function deleteEvent(id) {
+            console.log('Deleting event:', id);
             if (!confirm('Eliminare questo evento?')) return;
 
             try {
-                await fetch(`/api/events/${id}`, { method: 'DELETE' });
-                showToast('Evento eliminato');
+                const res = await fetch(`/api/events/${encodeURIComponent(id)}`, { 
+                    method: 'DELETE' 
+                });
+                const result = await res.json();
+                console.log('Delete result:', result);
+                
+                if (!res.ok) throw new Error(result.error || 'Delete failed');
+                
+                showToast('Evento eliminato!');
                 loadEvents();
             } catch (err) {
-                showToast('Errore nell\'eliminazione', true);
+                console.error('Delete error:', err);
+                showToast('Errore: ' + err.message, true);
             }
         }
 
         async function sendReminder(id) {
             const event = events.find(e => e.id === id);
             if (!event) return;
+
+            // Check if Google is connected
+            try {
+                const statusRes = await fetch('/api/status');
+                const status = await statusRes.json();
+                
+                if (!status.googleConnected) {
+                    showToast('Google non connesso. Connetti Google per inviare email.', true);
+                    
+                    // Show event details anyway as info
+                    const start = new Date(event.start?.dateTime || event.start?.date);
+                    const dateStr = start.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    const timeStr = event.start?.dateTime ? start.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : 'Giorno intero';
+                    
+                    alert(`📅 ${event.summary}\n📆 ${dateStr} • ${timeStr}\n\nPer inviare promemoria email, connetti Google Calendar.`);
+                    return;
+                }
+            } catch (e) {
+                console.error('Status check failed:', e);
+            }
 
             const email = prompt('Inserisci email per il promemoria:');
             if (!email) return;
